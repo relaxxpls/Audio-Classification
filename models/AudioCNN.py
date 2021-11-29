@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class PrintLayer(nn.Module):
@@ -12,7 +13,7 @@ class PrintLayer(nn.Module):
         return x
 
 
-class AudioCNN(nn.Module):
+class AudioCNN1D(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
 
@@ -55,3 +56,39 @@ class AudioCNN(nn.Module):
         hidden = self.classifier(hidden)
 
         return hidden
+
+
+class AudioCNN(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+
+        self.num_filters = 32
+        self.num_classes = num_classes
+
+        self.main = nn.Sequential(
+            nn.Conv2d(1, self.num_filters, 11, padding=5),
+            nn.BatchNorm2d(self.num_filters),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(self.num_filters, self.num_filters, 3, padding=1),
+            nn.BatchNorm2d(self.num_filters),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),
+            nn.Conv2d(self.num_filters, self.num_filters * 2, 3, padding=1),
+            nn.BatchNorm2d(self.num_filters * 2),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(self.num_filters * 2, self.num_filters * 4, 3, padding=1),
+            nn.BatchNorm2d(self.num_filters * 4),
+            nn.MaxPool2d(2),
+            nn.AdaptiveAvgPool2d((1, 1)),
+        )
+
+        self.fc = nn.Linear(self.num_filters * 4, self.num_classes)
+
+    def forward(self, x):
+        x = self.main(x)
+
+        # x = x.view(x.size(0), -1)
+        x = x[:, :, 0, 0]
+        x = self.fc(x)
+
+        return x
