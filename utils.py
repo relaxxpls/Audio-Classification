@@ -1,4 +1,19 @@
 import torch
+import torchaudio
+
+
+def audio_loader(path, max_length_in_seconds=4):
+    waveform, sample_rate = torchaudio.load(path)
+    num_channels, num_frames = waveform.shape
+    max_frames = sample_rate * max_length_in_seconds
+
+    # ? Pad audio with zeros if too short or cut audio if too long
+    if num_frames < max_frames:
+        waveform = torch.nn.functional.pad(waveform, (0, max_frames - num_frames))
+    elif num_frames > max_frames:
+        waveform = waveform.narrow(dim=1, start=0, length=max_frames)
+
+    return waveform
 
 
 def train(model, train_loader, criterion, optimizer, device="cpu"):
