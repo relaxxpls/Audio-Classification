@@ -1,0 +1,5 @@
+*
+
+# Except for these, ignore everything else.
+!densenet_epoch_20.pth
+!.gitignore
